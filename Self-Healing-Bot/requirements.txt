@@ -1,0 +1,6 @@
+kubernetes
+prometheus-client
+opentelemetry-sdk
+pytest
+python-dotenv
+aiohttp
