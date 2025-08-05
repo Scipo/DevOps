@@ -1,0 +1,85 @@
+---
+- hosts: webserver
+  become: true
+
+  tasks:
+    - name: Install Apache HTTP Server
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Start Apache HTTP Server and Enable it
+      ansible.builtin.service:
+        name: apache2
+        state: started
+        enabled: true
+      when: ansible_os_family == "Debian"
+
+    - name: Copy Index.html to the WebServer (Debian)
+      ansible.builtin.copy:
+        src: /home/vagrant/inventory/bgapp/web/ 
+        dest: /var/www/html/
+      when: ansible_os_family == "Debian"
+
+    - name: Install PyMySQL
+      ansible.builtin.apt:
+        name: python3-pymysql
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install PHP base package and extensions
+      ansible.builtin.apt:
+        name:
+          - php8.2
+          - php-mysql
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Enable Apache PHP module
+      ansible.builtin.shell: a2enmod php8.2
+
+    - name: Restart Apache service to apply PHP 8.2
+      ansible.builtin.service: 
+        name: apache2
+        state: restarted 
+                               
+
+- hosts: dbserver
+  become: true
+
+  tasks:
+    - name: Install MariaDB Server
+      ansible.builtin.dnf:
+        name:
+          - mariadb
+          - mariadb-server
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Start and enable MariaDB
+      ansible.builtin.service:
+        name: mariadb
+        state: started
+        enabled: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Allow port 3306/tcp in the firewall
+      ansible.posix.firewalld:
+        port: 3306/tcp
+        state: enabled 
+        permanent: true
+        immediate: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Install PyMySQL
+      ansible.builtin.dnf:
+        name: python3-PyMySQL
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Copy Database dump file to DBServer (Red Hat)
+      ansible.builtin.copy:
+        src: /home/vagrant/inventory/bgapp/db/db_setup.sql
+        dest: /home/vagrant/   
+
