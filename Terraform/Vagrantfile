@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do | config |
+    # Define the box for all nodes
+    config.vm.box="vagrant-debian-12.11"
+    
+    # VM Machine
+    config.vm.define "manager" do |manager|
+        manager.vm.hostname = "master"
+        manager.vm.network "private_network", ip: "192.168.100.200"
+        manager.vm.provider "virtualbox" do |vb|
+            vb.memory = "1536" # RAM
+            vb.cpus = "1" # CPU number
+        end
+        # Docker installation on master
+        manager.vm.provision "shell", path: "docker-setup.sh"
+        # Install additional packages
+        manager.vm.provision "shell", path: "add-packages.sh"
+     end   
+  end 
+             
+        
+              
