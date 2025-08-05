@@ -1,0 +1,47 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Define number of workers
+WORKERS_NUMBER = 2
+
+Vagrant.configure("2") do | config |
+    # Define the box for all nodes
+    config.vm.box="vagrant-debian-12.11"
+    
+    # Manager Node
+    config.vm.define "manager" do |manager|
+        manager.vm.hostname = "master"
+        manager.vm.network "private_network", ip: "192.168.100.201"
+        manager.vm.provider "virtualbox" do |vb|
+            vb.memory = "1536" # RAM
+            vb.cpus = "1" # CPU number
+        end
+        # Docker installation on master
+        manager.vm.provision "shell", path: "docker-setup.sh"
+        # Install additional packages
+        manager.vm.provision "shell", path: "add-packages.sh"
+        # Provision Swarm initialization on the master
+        manager.vm.provision "shell", path: "master_setup.sh"
+     end
+     
+     # Define worker nodes
+     (1..WORKERS_NUMBER).each do |i|
+        config.vm.define "worker#{i}" do |worker|
+            worker.vm.hostname = "worker#{i}"
+            worker.vm.network "private_network", ip: "192.168.100.20#{1 + i}" # WorkerIP
+            worker.vm.provider "virtualbox" do |vb|
+                vb.memory = "1536" # RAM
+                vb.cpus = "1" # CPU
+            end
+            # Docker install on each worker
+            worker.vm.provision "shell", path: "docker-setup.sh", args: "worker#{i}"
+            # Install additional packages
+            worker.vm.provision "shell", path: "add-packages.sh", args: "worker#{i}"
+            # Worker join the swarm
+            worker.vm.provision "shell", path: "worker_setup.sh", args: "192.168.100.201" # Pass master IP
+         end
+       end
+   end 
+             
+        
+              
